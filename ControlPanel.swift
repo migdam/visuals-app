@@ -25,27 +25,30 @@ struct ControlPanel: View {
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.6))
                         
-                        HStack(spacing: 8) {
-                            ForEach(VisualizationType.allCases, id: \.self) { type in
-                                Button(action: {
-                                    withAnimation(.spring(response: 0.3)) {
-                                        selectedVisualization = type
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(VisualizationType.allCases, id: \.self) { type in
+                                    Button(action: {
+                                        withAnimation(.spring(response: 0.3)) {
+                                            selectedVisualization = type
+                                        }
+                                    }) {
+                                        Text(type.rawValue)
+                                            .font(.system(size: 12, weight: .medium))
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                selectedVisualization == type ?
+                                                Color.white.opacity(0.2) :
+                                                Color.white.opacity(0.05)
+                                            )
+                                            .cornerRadius(8)
+                                            .foregroundColor(.white)
                                     }
-                                }) {
-                                    Text(type.rawValue)
-                                        .font(.system(size: 12, weight: .medium))
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            selectedVisualization == type ?
-                                            Color.white.opacity(0.2) :
-                                            Color.white.opacity(0.05)
-                                        )
-                                        .cornerRadius(8)
-                                        .foregroundColor(.white)
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .padding(.horizontal, 4)
                         }
                     }
                     

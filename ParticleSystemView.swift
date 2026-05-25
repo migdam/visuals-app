@@ -13,27 +13,29 @@ struct ParticleSystemView: View {
     let density: Int
     
     @State private var particles: [Particle] = []
-    @State private var time: Double = 0
     
     var body: some View {
-        TimelineView(.animation) { timeline in
-            Canvas { context, size in
-                let currentTime = timeline.date.timeIntervalSinceReferenceDate * speed
-                
-                // Update particles
-                if particles.count != density {
-                    particles = (0..<density).map { _ in
-                        Particle(
-                            x: Double.random(in: 0...size.width),
-                            y: Double.random(in: 0...size.height),
-                            vx: Double.random(in: -1...1),
-                            vy: Double.random(in: -1...1),
-                            size: Double.random(in: 2...6),
-                            color: colorScheme.particleColors.randomElement() ?? .white,
-                            phase: Double.random(in: 0...(.pi * 2))
-                        )
+        GeometryReader { geometry in
+            TimelineView(.animation) { timeline in
+                Canvas { context, size in
+                    let currentTime = timeline.date.timeIntervalSinceReferenceDate * speed
+                    
+                    // Initialize particles if needed
+                    if particles.isEmpty || particles.count != density {
+                        DispatchQueue.main.async {
+                            particles = (0..<density).map { _ in
+                                Particle(
+                                    x: Double.random(in: 0...size.width),
+                                    y: Double.random(in: 0...size.height),
+                                    vx: Double.random(in: -1...1),
+                                    vy: Double.random(in: -1...1),
+                                    size: Double.random(in: 3...8),
+                                    color: colorScheme.particleColors.randomElement() ?? .white,
+                                    phase: Double.random(in: 0...(.pi * 2))
+                                )
+                            }
+                        }
                     }
-                }
                 
                 for (index, var particle) in particles.enumerated() {
                     // Update position
@@ -55,23 +57,23 @@ struct ParticleSystemView: View {
                     // Outer glow
                     context.fill(
                         Circle().path(in: CGRect(
-                            x: position.x - pulseSize * 2,
-                            y: position.y - pulseSize * 2,
-                            width: pulseSize * 4,
-                            height: pulseSize * 4
+                            x: position.x - pulseSize * 3,
+                            y: position.y - pulseSize * 3,
+                            width: pulseSize * 6,
+                            height: pulseSize * 6
                         )),
-                        with: .color(particle.color.opacity(0.1))
+                        with: .color(particle.color.opacity(0.2))
                     )
                     
                     // Inner glow
                     context.fill(
                         Circle().path(in: CGRect(
-                            x: position.x - pulseSize,
-                            y: position.y - pulseSize,
-                            width: pulseSize * 2,
-                            height: pulseSize * 2
+                            x: position.x - pulseSize * 1.5,
+                            y: position.y - pulseSize * 1.5,
+                            width: pulseSize * 3,
+                            height: pulseSize * 3
                         )),
-                        with: .color(particle.color.opacity(0.4))
+                        with: .color(particle.color.opacity(0.6))
                     )
                     
                     // Core
@@ -82,7 +84,7 @@ struct ParticleSystemView: View {
                             width: pulseSize,
                             height: pulseSize
                         )),
-                        with: .color(particle.color)
+                        with: .color(particle.color.opacity(0.9))
                     )
                 }
                 
@@ -93,8 +95,8 @@ struct ParticleSystemView: View {
                         let dy = particles[i].y - particles[j].y
                         let distance = sqrt(dx * dx + dy * dy)
                         
-                        if distance < 100 {
-                            let opacity = (1 - distance / 100) * 0.2
+                        if distance < 150 {
+                            let opacity = (1 - distance / 150) * 0.4
                             var path = Path()
                             path.move(to: CGPoint(x: particles[i].x, y: particles[i].y))
                             path.addLine(to: CGPoint(x: particles[j].x, y: particles[j].y))
@@ -102,12 +104,13 @@ struct ParticleSystemView: View {
                             context.stroke(
                                 path,
                                 with: .color(.white.opacity(opacity)),
-                                lineWidth: 1
+                                lineWidth: 1.5
                             )
                         }
                     }
                 }
             }
+        }
         }
     }
 }

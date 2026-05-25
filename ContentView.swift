@@ -21,7 +21,11 @@ struct ContentView: View {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+            #if os(iOS)
+            .ignoresSafeArea(.all, edges: .all)
+            #else
             .ignoresSafeArea()
+            #endif
             
             // Main visualization
             Group {
@@ -31,6 +35,11 @@ struct ContentView: View {
                         colorScheme: colorScheme,
                         speed: speed,
                         density: Int(density)
+                    )
+                case .sphere:
+                    SphereView(
+                        colorScheme: colorScheme,
+                        speed: speed
                     )
                 case .waves:
                     WaveVisualizationView(
@@ -68,6 +77,7 @@ struct ContentView: View {
 
 enum VisualizationType: String, CaseIterable {
     case particles = "Particles"
+    case sphere = "3D Sphere"
     case waves = "Waves"
     case galaxy = "Galaxy"
     case aurora = "Aurora"
@@ -109,8 +119,4 @@ enum ColorSchemeType: String, CaseIterable {
             return [.white, .gray, Color(white: 0.8), Color(white: 0.6)]
         }
     }
-}
-
-#Preview {
-    ContentView()
 }
