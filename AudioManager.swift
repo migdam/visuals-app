@@ -18,6 +18,8 @@ class AudioManager: ObservableObject {
     private var ambientPlayer: AVAudioPlayer?
     private var audioEngine: AVAudioEngine?
     private var playerNode: AVAudioPlayerNode?
+    private var melodyPlayerNode: AVAudioPlayerNode?
+    private var melodyTimer: Timer?
     
     private init() {
         setupAudioSession()
@@ -74,9 +76,13 @@ class AudioManager: ObservableObject {
     }
     
     func stopAmbientSound() {
+        melodyTimer?.invalidate()
+        melodyTimer = nil
         playerNode?.stop()
+        melodyPlayerNode?.stop()
         audioEngine?.stop()
         playerNode = nil
+        melodyPlayerNode = nil
         audioEngine = nil
     }
     
@@ -153,9 +159,115 @@ class AudioManager: ObservableObject {
             self.audioEngine = engine
             self.playerNode = player
             
+            // Start melody layer
+            startMelody(engine: engine, baseFrequency: frequency, volume: volume)
+            
             print("Audio started: \(frequency)Hz at volume \(volume)")
         } catch {
             print("Audio playback error: \(error)")
         }
+    }
+    
+    private func startMelody(engine: AVAudioEngine, baseFrequency: Double, volume: Double) {
+        // Create melody player node
+        let melodyPlayer = AVAudioPlayerNode()
+        engine.attach(melodyPlayer)
+        
+        let audioFormat = AVAudioFormat(
+            commonFormat: .pcmFormatFloat32,
+            sampleRate: 44100.0,
+            channels: 2,
+            interleaved: false
+        )
+        
+        guard let format = audioFormat else { return }
+        
+        engine.connect(melodyPlayer, to: engine.mainMixerNode, format: format)
+        self.melodyPlayerNode = melodyPlayer
+        
+        // Pentatonic scale ratios (5-note scale, no dissonance)
+        let pentatonicRatios = [1.0, 9.0/8.0, 5.0/4.0, 3.0/2.0, 5.0/3.0]
+        var noteIndex = 0
+        
+        // Play a new note every 2-4 seconds
+        melodyTimer = Timer.scheduledTimer(withTimeInterval: 2.5, repeats: true) { [weak self] _ in
+            guard let self = self, let player = self.melodyPlayerNode else { return }
+            
+            // Pick next note in sequence with occasional octave jumps
+            let ratio = pentatonicRatios[noteIndex % pentatonicRatios.count]
+            let octaveShift = (noteIndex / pentatonicRatios.count) % 3
+            let octaveMultiplier = pow(2.0, Double(octaveShift - 1)) // -1, 0, or +1 octaves
+            
+            let noteFreq = baseFrequency * ratio * octaveMultiplier
+            noteIndex += 1
+            
+            // Generate smooth note with ADSR envelope
+            if let noteBuffer = self.generateMelodyNote(
+                frequency: noteFreq,
+                duration: 2.0,
+                volume: volume * 0.15,
+                format: format
+            ) {
+                player.scheduleBuffer(noteBuffer, at: nil, options: [])
+                if !player.isPlaying {
+                    player.play()
+                }
+            }
+        }
+        
+        // Fire first note immediately
+        melodyTimer?.fire()
+    }
+    
+    private func generateMelodyNote(
+        frequency: Double,
+        duration: Double,
+        volume: Double,
+        format: AVAudioFormat
+    ) -> AVAudioPCMBuffer? {
+        let sampleRate = format.sampleRate
+        let samples = Int(sampleRate * duration)
+        
+        guard let buffer = AVAudioPCMBuffer(
+            pcmFormat: format,
+            frameCapacity: AVAudioFrameCount(samples)
+        ) else { return nil }
+        
+        buffer.frameLength = buffer.frameCapacity
+        
+        guard let leftChannel = buffer.floatChannelData?[0],
+              let rightChannel = buffer.floatChannelData?[1] else { return nil }
+        
+        for i in 0..<samples {
+            let time = Double(i) / sampleRate
+            
+            // ADSR envelope: Attack, Decay, Sustain, Release
+            let attack = 0.1
+            let decay = 0.2
+            let sustain = 0.5
+            let release = 0.2
+            
+            var envelope = 1.0
+            if time < attack {
+                envelope = time / attack
+            } else if time < attack + decay {
+                let decayTime = (time - attack) / decay
+                envelope = 1.0 - (1.0 - sustain) * decayTime
+            } else if time < duration - release {
+                envelope = sustain
+            } else {
+                let releaseTime = (time - (duration - release)) / release
+                envelope = sustain * (1.0 - releaseTime)
+            }
+            
+            // Pure sine wave with slight vibrato
+            let vibrato = 1.0 + 0.003 * sin(2.0 * .pi * 5.0 * time)
+            let sample = Float(sin(2.0 * .pi * frequency * vibrato * time) * volume * envelope)
+            
+            leftChannel[i] = sample
+            rightChannel[i] = sample
+        }
+        
+        return buffer
     }
 }
