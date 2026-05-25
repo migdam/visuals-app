@@ -16,6 +16,8 @@ class AudioManager: ObservableObject {
     
     private var audioPlayers: [String: AVAudioPlayer] = [:]
     private var ambientPlayer: AVAudioPlayer?
+    private var audioEngine: AVAudioEngine?
+    private var playerNode: AVAudioPlayerNode?
     
     private init() {
         setupAudioSession()
@@ -72,8 +74,10 @@ class AudioManager: ObservableObject {
     }
     
     func stopAmbientSound() {
-        ambientPlayer?.stop()
-        ambientPlayer = nil
+        playerNode?.stop()
+        audioEngine?.stop()
+        playerNode = nil
+        audioEngine = nil
     }
     
     private func playGeneratedTone(frequency: Double, duration: Double, volume: Double) {
@@ -125,23 +129,31 @@ class AudioManager: ObservableObject {
             }
         }
         
+        // Stop any existing audio
+        stopAmbientSound()
+        
         // Create and configure player
         do {
             let engine = AVAudioEngine()
-            let playerNode = AVAudioPlayerNode()
+            let player = AVAudioPlayerNode()
             
-            engine.attach(playerNode)
-            engine.connect(playerNode, to: engine.mainMixerNode, format: audioFormat)
+            engine.attach(player)
+            engine.connect(player, to: engine.mainMixerNode, format: audioFormat)
+            
+            // Set volume on main mixer
+            engine.mainMixerNode.outputVolume = Float(volume)
             
             try engine.start()
-            playerNode.scheduleBuffer(buffer, at: nil, options: .loops)
-            playerNode.play()
             
-            // Store reference (simplified - in production would need better management)
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) { [weak self] in
-                playerNode.stop()
-                engine.stop()
-            }
+            // Schedule buffer to loop
+            player.scheduleBuffer(buffer, at: nil, options: .loops)
+            player.play()
+            
+            // Store references to keep them alive
+            self.audioEngine = engine
+            self.playerNode = player
+            
+            print("Audio started: \(frequency)Hz at volume \(volume)")
         } catch {
             print("Audio playback error: \(error)")
         }
