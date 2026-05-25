@@ -9,6 +9,8 @@ import SwiftUI
 
 @main
 struct VisualsApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -17,5 +19,12 @@ struct VisualsApp: App {
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
+    }
+}
+
+class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillTerminate(_ notification: Notification) {
+        // Clean up audio when app quits
+        AudioManager.shared.stopAmbientSound()
     }
 }
