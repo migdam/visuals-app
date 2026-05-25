@@ -14,6 +14,9 @@ struct ContentView: View {
     @State private var density: Double = 100
     @State private var showSidebar: Bool = false
     @StateObject private var audioManager = AudioManager.shared
+    @State private var droppedImage: NSImage? = nil
+    @State private var imageOpacity: Double = 0.3
+    @State private var showDropIndicator: Bool = false
     
     var body: some View {
         ZStack {
@@ -28,6 +31,18 @@ struct ContentView: View {
             #else
             .ignoresSafeArea()
             #endif
+            
+            // Dropped image overlay
+            if let image = droppedImage {
+                #if os(macOS)
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .opacity(imageOpacity)
+                    .blendMode(.screen)
+                    .ignoresSafeArea()
+                #endif
+            }
             
             // Main visualization
             Group {
@@ -64,6 +79,27 @@ struct ContentView: View {
                         speed: speed
                     )
                 }
+            }
+            
+            // Drop indicator
+            if showDropIndicator {
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 4, dash: [10]))
+                    .foregroundColor(.white)
+                    .padding(40)
+                    .overlay(
+                        VStack {
+                            Image(systemName: "photo.on.rectangle.angled")
+                                .font(.system(size: 60))
+                                .foregroundColor(.white)
+                            Text("Drop Image Here")
+                                .font(.title)
+                                .foregroundColor(.white)
+                                .padding(.top, 10)
+                        }
+                    )
+                    .background(.ultraThinMaterial.opacity(0.5))
+                    .transition(.opacity)
             }
             
             // Overlay dimmer when sidebar is open
@@ -126,6 +162,45 @@ struct ContentView: View {
                 }
                 .transition(.opacity)
             }
+            
+            // Image controls (when image is loaded)
+            if droppedImage != nil {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        VStack(spacing: 12) {
+                            // Opacity slider
+                            VStack(spacing: 4) {
+                                Image(systemName: "opacity")
+                                    .foregroundColor(.white)
+                                Slider(value: $imageOpacity, in: 0...1)
+                                    .frame(width: 100)
+                            }
+                            
+                            // Clear button
+                            Button(action: {
+                                withAnimation {
+                                    droppedImage = nil
+                                }
+                            }) {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                                    .padding(8)
+                                    .background(.ultraThinMaterial)
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(16)
+                        .background(.ultraThinMaterial)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                        .padding(20)
+                    }
+                }
+            }
         }
         .gesture(
             DragGesture(minimumDistance: 20)
@@ -150,6 +225,41 @@ struct ContentView: View {
                     }
                 }
         )
+        #if os(macOS)
+        .onDrop(of: [.image, .fileURL], isTargeted: $showDropIndicator) { providers in
+            guard let provider = providers.first else { return false }
+            
+            // Try to load image from provider
+            if provider.hasItemConformingToTypeIdentifier("public.file-url") {
+                _ = provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (urlData, error) in
+                    DispatchQueue.main.async {
+                        if let urlData = urlData as? Data,
+                           let url = URL(dataRepresentation: urlData, relativeTo: nil),
+                           let image = NSImage(contentsOf: url) {
+                            withAnimation {
+                                self.droppedImage = image
+                            }
+                        }
+                    }
+                }
+                return true
+            } else if provider.hasItemConformingToTypeIdentifier("public.image") {
+                _ = provider.loadItem(forTypeIdentifier: "public.image", options: nil) { (imageData, error) in
+                    DispatchQueue.main.async {
+                        if let data = imageData as? Data,
+                           let image = NSImage(data: data) {
+                            withAnimation {
+                                self.droppedImage = image
+                            }
+                        }
+                    }
+                }
+                return true
+            }
+            
+            return false
+        }
+        #endif
     }
 }
 
