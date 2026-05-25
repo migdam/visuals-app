@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var colorScheme: ColorSchemeType = .cosmic
     @State private var speed: Double = 1.0
     @State private var density: Double = 100
+    @State private var showSidebar: Bool = false
     
     var body: some View {
         ZStack {
@@ -64,19 +65,68 @@ struct ContentView: View {
                 }
             }
             
-            // Control panel
-            VStack {
-                Spacer()
+            // Sidebar navigation
+            HStack(spacing: 0) {
+                if showSidebar {
+                    SidebarView(
+                        selectedVisualization: $selectedVisualization,
+                        colorScheme: $colorScheme,
+                        speed: $speed,
+                        density: $density,
+                        showSidebar: $showSidebar
+                    )
+                    .transition(.move(edge: .leading))
+                    .zIndex(1)
+                }
                 
-                ControlPanel(
-                    selectedVisualization: $selectedVisualization,
-                    colorScheme: $colorScheme,
-                    speed: $speed,
-                    density: $density
-                )
-                .padding()
+                Spacer()
+            }
+            
+            // Menu button (only show when sidebar is hidden)
+            if !showSidebar {
+                VStack {
+                    HStack {
+                        Button(action: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                showSidebar.toggle()
+                            }
+                        }) {
+                            Image(systemName: "line.3.horizontal")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(20)
+                        
+                        Spacer()
+                    }
+                    
+                    Spacer()
+                }
+                .transition(.opacity)
             }
         }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    // Swipe from left edge to open
+                    if value.startLocation.x < 50 && value.translation.width > 100 {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showSidebar = true
+                        }
+                    }
+                    // Swipe to right to close
+                    else if showSidebar && value.translation.width < -100 {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showSidebar = false
+                        }
+                    }
+                }
+        )
     }
 }
 

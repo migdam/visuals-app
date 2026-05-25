@@ -16,6 +16,8 @@
 		B1000007000000000001 /* GalaxyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000007000000000001 /* GalaxyView.swift */; };
 		B1000008000000000001 /* AuroraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000008000000000001 /* AuroraView.swift */; };
 		B1000009000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2000009000000000001 /* Assets.xcassets */; };
+		B1000010000000000001 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000011000000000001 /* SidebarView.swift */; };
+		B1000011000000000001 /* GlassCardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2000012000000000001 /* GlassCardsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +32,8 @@
 		B2000008000000000001 /* AuroraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuroraView.swift; sourceTree = "<group>"; };
 		B2000009000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B2000010000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B2000011000000000001 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		B2000012000000000001 /* GlassCardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassCardsView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +58,8 @@
 				B2000006000000000001 /* WaveVisualizationView.swift */,
 				B2000007000000000001 /* GalaxyView.swift */,
 				B2000008000000000001 /* AuroraView.swift */,
+				B2000011000000000001 /* SidebarView.swift */,
+				B2000012000000000001 /* GlassCardsView.swift */,
 				B2000009000000000001 /* Assets.xcassets */,
 				B2000010000000000001 /* Info.plist */,
 				B5000002000000000001 /* Products */,
@@ -145,6 +151,8 @@
 				B1000006000000000001 /* WaveVisualizationView.swift in Sources */,
 				B1000007000000000001 /* GalaxyView.swift in Sources */,
 				B1000008000000000001 /* AuroraView.swift in Sources */,
+				B1000010000000000001 /* SidebarView.swift in Sources */,
+				B1000011000000000001 /* GlassCardsView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
