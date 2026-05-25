@@ -13,6 +13,8 @@ struct SidebarView: View {
     @Binding var speed: Double
     @Binding var density: Double
     @Binding var showSidebar: Bool
+    @Binding var droppedImage: NSImage?
+    @Binding var imageOpacity: Double
     @ObservedObject var audioManager = AudioManager.shared
     
     var body: some View {
@@ -198,6 +200,74 @@ struct SidebarView: View {
                                 
                                 Slider(value: $density, in: 20...300)
                                     .tint(.white.opacity(0.7))
+                            }
+                            .padding(.horizontal, 20)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+                        
+                        // Image control
+                        if droppedImage != nil {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "photo")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.6))
+                                    Text("Image")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.8))
+                                    Spacer()
+                                    Text("\(Int(imageOpacity * 100))%")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                
+                                Slider(value: $imageOpacity, in: 0...1)
+                                    .tint(.white.opacity(0.7))
+                                
+                                HStack(spacing: 8) {
+                                    // Toggle visibility button
+                                    Button(action: {
+                                        AudioManager.shared.playUISound()
+                                        withAnimation {
+                                            imageOpacity = imageOpacity > 0 ? 0 : 0.3
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: imageOpacity > 0 ? "eye.fill" : "eye.slash.fill")
+                                                .font(.system(size: 12))
+                                            Text(imageOpacity > 0 ? "Hide" : "Show")
+                                                .font(.system(size: 12))
+                                        }
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 6)
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                    
+                                    // Clear button
+                                    Button(action: {
+                                        AudioManager.shared.playUISound()
+                                        withAnimation {
+                                            droppedImage = nil
+                                            imageOpacity = 0.3
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "xmark")
+                                                .font(.system(size: 12))
+                                            Text("Clear")
+                                                .font(.system(size: 12))
+                                        }
+                                        .foregroundColor(.white.opacity(0.8))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 6)
+                                        .background(Color.white.opacity(0.1))
+                                        .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
                             }
                             .padding(.horizontal, 20)
                             .transition(.opacity.combined(with: .move(edge: .top)))

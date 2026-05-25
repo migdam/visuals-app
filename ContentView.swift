@@ -123,7 +123,9 @@ struct ContentView: View {
                         colorScheme: $colorScheme,
                         speed: $speed,
                         density: $density,
-                        showSidebar: $showSidebar
+                        showSidebar: $showSidebar,
+                        droppedImage: $droppedImage,
+                        imageOpacity: $imageOpacity
                     )
                     .transition(.asymmetric(
                         insertion: .move(edge: .leading).combined(with: .opacity),
@@ -161,69 +163,6 @@ struct ContentView: View {
                     Spacer()
                 }
                 .transition(.opacity)
-            }
-            
-            // Image controls (when image is loaded)
-            if droppedImage != nil {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 12) {
-                            // Opacity slider with value display
-                            VStack(spacing: 4) {
-                                HStack {
-                                    Image(systemName: "opacity")
-                                        .foregroundColor(.white)
-                                    Text("\(Int(imageOpacity * 100))%")
-                                        .foregroundColor(.white)
-                                        .font(.caption)
-                                        .monospacedDigit()
-                                }
-                                Slider(value: $imageOpacity, in: 0...1)
-                                    .frame(width: 120)
-                            }
-                            
-                            HStack(spacing: 8) {
-                                // Toggle visibility button
-                                Button(action: {
-                                    withAnimation {
-                                        imageOpacity = imageOpacity > 0 ? 0 : 0.3
-                                    }
-                                }) {
-                                    Image(systemName: imageOpacity > 0 ? "eye.fill" : "eye.slash.fill")
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.white)
-                                        .padding(8)
-                                        .background(.ultraThinMaterial)
-                                        .clipShape(Circle())
-                                }
-                                .buttonStyle(.plain)
-                                
-                                // Clear button
-                                Button(action: {
-                                    withAnimation {
-                                        droppedImage = nil
-                                        imageOpacity = 0.3
-                                    }
-                                }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.white)
-                                        .padding(8)
-                                        .background(.ultraThinMaterial)
-                                        .clipShape(Circle())
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-                        .padding(16)
-                        .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
-                        .padding(20)
-                    }
-                }
             }
             
             // Native drop target overlay (invisible but captures drops)
