@@ -13,6 +13,7 @@ struct ContentView: View {
     @State private var speed: Double = 1.0
     @State private var density: Double = 100
     @State private var showSidebar: Bool = false
+    @StateObject private var audioManager = AudioManager.shared
     
     var body: some View {
         ZStack {

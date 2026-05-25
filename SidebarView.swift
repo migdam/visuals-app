@@ -13,6 +13,7 @@ struct SidebarView: View {
     @Binding var speed: Double
     @Binding var density: Double
     @Binding var showSidebar: Bool
+    @ObservedObject var audioManager = AudioManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -57,9 +58,11 @@ struct SidebarView: View {
                         
                         ForEach(VisualizationType.allCases, id: \.self) { type in
                             Button(action: {
+                                AudioManager.shared.playTransitionSound()
                                 withAnimation(.spring(response: 0.3)) {
                                     selectedVisualization = type
                                 }
+                                AudioManager.shared.startAmbientSound(for: type)
                             }) {
                                 HStack(spacing: 12) {
                                     Image(systemName: iconForVisualization(type))
@@ -105,6 +108,7 @@ struct SidebarView: View {
                         ], spacing: 12) {
                             ForEach(ColorSchemeType.allCases, id: \.self) { scheme in
                                 Button(action: {
+                                    AudioManager.shared.playUISound()
                                     withAnimation(.spring(response: 0.3)) {
                                         colorScheme = scheme
                                     }
@@ -198,6 +202,48 @@ struct SidebarView: View {
                             .padding(.horizontal, 20)
                             .transition(.opacity.combined(with: .move(edge: .top)))
                         }
+                        
+                        Divider()
+                            .background(Color.white.opacity(0.2))
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                        
+                        // Sound control
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: audioManager.isEnabled ? "speaker.wave.2" : "speaker.slash")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.6))
+                                Text("Sound")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.8))
+                                Spacer()
+                                Toggle("", isOn: $audioManager.isEnabled)
+                                    .labelsHidden()
+                                    .tint(.white.opacity(0.7))
+                            }
+                            
+                            if audioManager.isEnabled {
+                                HStack {
+                                    Image(systemName: "speaker.wave.1")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.white.opacity(0.5))
+                                    Text("Volume")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(.white.opacity(0.6))
+                                    Spacer()
+                                    Text("\(Int(audioManager.volume * 100))%")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                                
+                                Slider(value: $audioManager.volume, in: 0.0...1.0)
+                                    .tint(.white.opacity(0.7))
+                                
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                        }
+                        .padding(.horizontal, 20)
                     }
                     
                     Spacer(minLength: 20)
