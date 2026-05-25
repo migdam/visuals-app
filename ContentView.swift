@@ -41,6 +41,11 @@ struct ContentView: View {
                         colorScheme: colorScheme,
                         speed: speed
                     )
+                case .glassCards:
+                    GlassCardsView(
+                        colorScheme: colorScheme,
+                        speed: speed
+                    )
                 case .waves:
                     WaveVisualizationView(
                         colorScheme: colorScheme,
@@ -78,6 +83,7 @@ struct ContentView: View {
 enum VisualizationType: String, CaseIterable {
     case particles = "Particles"
     case sphere = "3D Sphere"
+    case glassCards = "Glass Cards"
     case waves = "Waves"
     case galaxy = "Galaxy"
     case aurora = "Aurora"
