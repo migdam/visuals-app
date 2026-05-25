@@ -206,17 +206,22 @@ struct SidebarView: View {
             }
         }
         .frame(maxWidth: 280)
-        .background(.ultraThinMaterial)
-        .overlay(
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: colorScheme.particleColors.map { $0.opacity(0.1) },
-                        startPoint: .top,
-                        endPoint: .bottom
+        .background(
+            ZStack {
+                Color.black.opacity(0.3)
+                    .background(.ultraThinMaterial)
+                
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: colorScheme.particleColors.map { $0.opacity(0.1) },
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                     )
-                )
+            }
         )
+        .shadow(color: .black.opacity(0.5), radius: 30, x: 10, y: 0)
     }
     
     private func iconForVisualization(_ type: VisualizationType) -> String {

@@ -65,6 +65,19 @@ struct ContentView: View {
                 }
             }
             
+            // Overlay dimmer when sidebar is open
+            if showSidebar {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showSidebar = false
+                        }
+                    }
+                    .transition(.opacity)
+                    .zIndex(0)
+            }
+            
             // Sidebar navigation
             HStack(spacing: 0) {
                 if showSidebar {
@@ -75,7 +88,10 @@ struct ContentView: View {
                         density: $density,
                         showSidebar: $showSidebar
                     )
-                    .transition(.move(edge: .leading))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .leading).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
                     .zIndex(1)
                 }
                 
@@ -111,18 +127,24 @@ struct ContentView: View {
             }
         }
         .gesture(
-            DragGesture()
+            DragGesture(minimumDistance: 20)
                 .onEnded { value in
-                    // Swipe from left edge to open
-                    if value.startLocation.x < 50 && value.translation.width > 100 {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            showSidebar = true
+                    let horizontalAmount = value.translation.width
+                    let verticalAmount = value.translation.height
+                    
+                    // Only trigger if drag is mostly horizontal
+                    if abs(horizontalAmount) > abs(verticalAmount) {
+                        // Swipe from left edge to open
+                        if !showSidebar && value.startLocation.x < 50 && horizontalAmount > 80 {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                showSidebar = true
+                            }
                         }
-                    }
-                    // Swipe to right to close
-                    else if showSidebar && value.translation.width < -100 {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            showSidebar = false
+                        // Swipe left to close
+                        else if showSidebar && horizontalAmount < -80 {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                showSidebar = false
+                            }
                         }
                     }
                 }
