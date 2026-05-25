@@ -37,7 +37,7 @@ struct ContentView: View {
                 #if os(macOS)
                 Image(nsImage: image)
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
                     .opacity(imageOpacity)
                     .blendMode(.screen)
                     .ignoresSafeArea()
@@ -170,28 +170,52 @@ struct ContentView: View {
                     HStack {
                         Spacer()
                         VStack(spacing: 12) {
-                            // Opacity slider
+                            // Opacity slider with value display
                             VStack(spacing: 4) {
-                                Image(systemName: "opacity")
-                                    .foregroundColor(.white)
+                                HStack {
+                                    Image(systemName: "opacity")
+                                        .foregroundColor(.white)
+                                    Text("\(Int(imageOpacity * 100))%")
+                                        .foregroundColor(.white)
+                                        .font(.caption)
+                                        .monospacedDigit()
+                                }
                                 Slider(value: $imageOpacity, in: 0...1)
-                                    .frame(width: 100)
+                                    .frame(width: 120)
                             }
                             
-                            // Clear button
-                            Button(action: {
-                                withAnimation {
-                                    droppedImage = nil
+                            HStack(spacing: 8) {
+                                // Toggle visibility button
+                                Button(action: {
+                                    withAnimation {
+                                        imageOpacity = imageOpacity > 0 ? 0 : 0.3
+                                    }
+                                }) {
+                                    Image(systemName: imageOpacity > 0 ? "eye.fill" : "eye.slash.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white)
+                                        .padding(8)
+                                        .background(.ultraThinMaterial)
+                                        .clipShape(Circle())
                                 }
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.white)
-                                    .padding(8)
-                                    .background(.ultraThinMaterial)
-                                    .clipShape(Circle())
+                                .buttonStyle(.plain)
+                                
+                                // Clear button
+                                Button(action: {
+                                    withAnimation {
+                                        droppedImage = nil
+                                        imageOpacity = 0.3
+                                    }
+                                }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.white)
+                                        .padding(8)
+                                        .background(.ultraThinMaterial)
+                                        .clipShape(Circle())
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                         .padding(16)
                         .background(.ultraThinMaterial)
@@ -201,6 +225,13 @@ struct ContentView: View {
                     }
                 }
             }
+            
+            // Native drop target overlay (invisible but captures drops)
+            #if os(macOS)
+            ImageDropView(droppedImage: $droppedImage, showDropIndicator: $showDropIndicator)
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
+            #endif
         }
         .gesture(
             DragGesture(minimumDistance: 20)
@@ -225,59 +256,6 @@ struct ContentView: View {
                     }
                 }
         )
-        #if os(macOS)
-        .onDrop(of: [.image, .fileURL, .tiff, .png, .jpeg], isTargeted: $showDropIndicator) { providers in
-            guard let provider = providers.first else { return false }
-            
-            // Try multiple type identifiers in order of priority
-            let typeIdentifiers = [
-                "public.tiff",           // Photos app often uses TIFF
-                "public.png",            // PNG images
-                "public.jpeg",           // JPEG images
-                "public.image",          // Generic image
-                "public.file-url"        // File URLs from Finder
-            ]
-            
-            for typeIdentifier in typeIdentifiers {
-                if provider.hasItemConformingToTypeIdentifier(typeIdentifier) {
-                    if typeIdentifier == "public.file-url" {
-                        // Handle file URLs from Finder
-                        provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (urlData, error) in
-                            DispatchQueue.main.async {
-                                if let urlData = urlData as? Data,
-                                   let url = URL(dataRepresentation: urlData, relativeTo: nil),
-                                   let image = NSImage(contentsOf: url) {
-                                    withAnimation {
-                                        self.droppedImage = image
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        // Handle direct image data (Photos app, Safari, etc.)
-                        provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (imageData, error) in
-                            DispatchQueue.main.async {
-                                if let data = imageData as? Data,
-                                   let image = NSImage(data: data) {
-                                    withAnimation {
-                                        self.droppedImage = image
-                                    }
-                                } else if let image = imageData as? NSImage {
-                                    // Sometimes the provider gives us NSImage directly
-                                    withAnimation {
-                                        self.droppedImage = image
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return true
-                }
-            }
-            
-            return false
-        }
-        #endif
     }
 }
 

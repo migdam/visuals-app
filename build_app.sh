@@ -4,7 +4,7 @@ echo "Building Visuals.app with icon..."
 
 # Compile the executable
 swiftc -O -framework SwiftUI -framework Foundation -framework AppKit -framework AVFoundation \
-  VisualsApp.swift ContentView.swift SidebarView.swift AudioManager.swift ControlPanel.swift \
+  VisualsApp.swift ContentView.swift ImageDropView.swift SidebarView.swift AudioManager.swift ControlPanel.swift \
   ParticleSystemView.swift SphereView.swift GlassCardsView.swift WaveVisualizationView.swift \
   GalaxyView.swift AuroraView.swift -o Visuals
 
