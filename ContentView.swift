@@ -226,35 +226,53 @@ struct ContentView: View {
                 }
         )
         #if os(macOS)
-        .onDrop(of: [.image, .fileURL], isTargeted: $showDropIndicator) { providers in
+        .onDrop(of: [.image, .fileURL, .tiff, .png, .jpeg], isTargeted: $showDropIndicator) { providers in
             guard let provider = providers.first else { return false }
             
-            // Try to load image from provider
-            if provider.hasItemConformingToTypeIdentifier("public.file-url") {
-                _ = provider.loadItem(forTypeIdentifier: "public.file-url", options: nil) { (urlData, error) in
-                    DispatchQueue.main.async {
-                        if let urlData = urlData as? Data,
-                           let url = URL(dataRepresentation: urlData, relativeTo: nil),
-                           let image = NSImage(contentsOf: url) {
-                            withAnimation {
-                                self.droppedImage = image
+            // Try multiple type identifiers in order of priority
+            let typeIdentifiers = [
+                "public.tiff",           // Photos app often uses TIFF
+                "public.png",            // PNG images
+                "public.jpeg",           // JPEG images
+                "public.image",          // Generic image
+                "public.file-url"        // File URLs from Finder
+            ]
+            
+            for typeIdentifier in typeIdentifiers {
+                if provider.hasItemConformingToTypeIdentifier(typeIdentifier) {
+                    if typeIdentifier == "public.file-url" {
+                        // Handle file URLs from Finder
+                        provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (urlData, error) in
+                            DispatchQueue.main.async {
+                                if let urlData = urlData as? Data,
+                                   let url = URL(dataRepresentation: urlData, relativeTo: nil),
+                                   let image = NSImage(contentsOf: url) {
+                                    withAnimation {
+                                        self.droppedImage = image
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        // Handle direct image data (Photos app, Safari, etc.)
+                        provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (imageData, error) in
+                            DispatchQueue.main.async {
+                                if let data = imageData as? Data,
+                                   let image = NSImage(data: data) {
+                                    withAnimation {
+                                        self.droppedImage = image
+                                    }
+                                } else if let image = imageData as? NSImage {
+                                    // Sometimes the provider gives us NSImage directly
+                                    withAnimation {
+                                        self.droppedImage = image
+                                    }
+                                }
                             }
                         }
                     }
+                    return true
                 }
-                return true
-            } else if provider.hasItemConformingToTypeIdentifier("public.image") {
-                _ = provider.loadItem(forTypeIdentifier: "public.image", options: nil) { (imageData, error) in
-                    DispatchQueue.main.async {
-                        if let data = imageData as? Data,
-                           let image = NSImage(data: data) {
-                            withAnimation {
-                                self.droppedImage = image
-                            }
-                        }
-                    }
-                }
-                return true
             }
             
             return false
