@@ -195,6 +195,10 @@ struct ContentView: View {
                     }
                 }
         )
+        .onAppear {
+            // Start ambient sound for initial visualization
+            audioManager.startAmbientSound(for: selectedVisualization)
+        }
     }
 }
 
